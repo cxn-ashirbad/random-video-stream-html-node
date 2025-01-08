@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Video Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-orange-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Video Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <!-- Local Video -->
+            <div class="relative rounded-xl overflow-hidden bg-gray-900 aspect-video">
+                <video id="localVideo" 
+                       class="w-full h-full object-cover rounded-xl mirror-mode"
+                       autoplay 
+                       muted
+                       playsinline>
+                </video>
+                <div class="absolute bottom-4 left-4 bg-black/50 px-3 py-1 rounded-full text-white text-sm">
+                    You
+                </div>
+            </div>
+            
+            <!-- Remote Video -->
+            <div class="relative rounded-xl overflow-hidden bg-gray-900 aspect-video">
+                <video id="remoteVideo" 
+                       class="w-full h-full object-cover rounded-xl"
+                       autoplay 
+                       playsinline>
+                </video>
+                <div id="waitingMessage" 
+                     class="absolute inset-0 flex items-center justify-center text-white text-lg">
+                    Waiting for someone to connect...
+                </div>
+                <div class="absolute bottom-4 left-4 bg-black/50 px-3 py-1 rounded-full text-white text-sm">
+                    Stranger
+                </div>
+            </div>
+        </div>
+
+        <!-- Next Button -->
+        <div class="flex justify-center mb-8">
+            <button id="nextButton" 
+                    class="bg-orange-400 text-white px-8 py-2 rounded-full flex items-center gap-2 hover:bg-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <span>Next</span>
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+
+        <!-- Status Text -->
+        <div class="flex justify-center mb-12">
+            <div class="flex items-center gap-2">
+                <div id="statusDot" class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                <p id="statusText" class="text-gray-600">Initializing...</p>
+            </div>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="flex justify-center gap-4">
+            <button id="muteButton" 
+                    class="bg-navy-800 text-white p-4 rounded-full hover:bg-navy-900 transition-colors">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <button id="videoButton" 
+                    class="bg-navy-800 text-white p-4 rounded-full hover:bg-navy-900 transition-colors">
+                <i class="fas fa-video"></i>
+            </button>
+            <button id="settingsButton" 
+                    class="bg-navy-800 text-white p-4 rounded-full hover:bg-navy-900 transition-colors">
+                <i class="fas fa-ellipsis-h"></i>
+            </button>
+            <button id="endCallButton" 
+                    class="bg-red-500 text-white p-4 rounded-full hover:bg-red-600 transition-colors">
+                <i class="fas fa-phone-slash"></i>
+            </button>
+        </div>
+    </div>
+
+    <style>
+        .mirror-mode {
+            transform: scaleX(-1);
+        }
+    </style>
+    <script src="script.js"></script>
+</body>
+</html> 
