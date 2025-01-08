@@ -6,6 +6,7 @@ const connections = new Map();
 
 wss.on("connection", (ws) => {
   ws.id = Math.random().toString(36).substr(2, 9);
+  ws.username = null;
 
   ws.send(
     JSON.stringify({
@@ -16,6 +17,10 @@ wss.on("connection", (ws) => {
 
   ws.on("message", (message) => {
     const data = JSON.parse(message);
+
+    if (data.username) {
+      ws.username = data.username;
+    }
 
     switch (data.type) {
       case "waiting":
@@ -63,8 +68,20 @@ function handleWaitingUser(ws) {
       connections.set(ws.id, partner.id);
       connections.set(partner.id, ws.id);
 
-      ws.send(JSON.stringify({ type: "partner-found", initiator: true }));
-      partner.send(JSON.stringify({ type: "partner-found", initiator: false }));
+      ws.send(
+        JSON.stringify({
+          type: "partner-found",
+          initiator: true,
+          partnerName: partner.username,
+        })
+      );
+      partner.send(
+        JSON.stringify({
+          type: "partner-found",
+          initiator: false,
+          partnerName: ws.username,
+        })
+      );
     }
   } else {
     waitingUsers.add(ws.id);

@@ -7,10 +7,14 @@ class RandomVideoChat {
     this.isAudioMuted = false;
     this.isVideoOff = false;
     this.iceCandidatesQueue = [];
+    this.username = this.generateRandomName();
+    this.partnerName = null;
 
     // DOM elements
     this.localVideo = document.getElementById("localVideo");
     this.remoteVideo = document.getElementById("remoteVideo");
+    this.localNameLabel = document.getElementById("localNameLabel");
+    this.remoteNameLabel = document.getElementById("remoteNameLabel");
     this.nextButton = document.getElementById("nextButton");
     this.muteButton = document.getElementById("muteButton");
     this.videoButton = document.getElementById("videoButton");
@@ -21,6 +25,57 @@ class RandomVideoChat {
 
     this.initializeEventListeners();
     this.initializeWebSocket();
+    this.updateLocalName();
+  }
+
+  generateRandomName() {
+    const adjectives = [
+      "Happy",
+      "Clever",
+      "Brave",
+      "Gentle",
+      "Swift",
+      "Calm",
+      "Bright",
+      "Kind",
+      "Wild",
+      "Wise",
+      "Bold",
+      "Quiet",
+      "Merry",
+    ];
+    const animals = [
+      "Panda",
+      "Fox",
+      "Owl",
+      "Tiger",
+      "Wolf",
+      "Bear",
+      "Eagle",
+      "Lion",
+      "Deer",
+      "Duck",
+      "Cat",
+      "Dog",
+      "Bird",
+    ];
+    const randomAdjective =
+      adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
+    return `${randomAdjective}${randomAnimal}`;
+  }
+
+  updateLocalName() {
+    if (this.localNameLabel) {
+      this.localNameLabel.textContent = this.username;
+    }
+  }
+
+  updateRemoteName(name) {
+    this.partnerName = name;
+    if (this.remoteNameLabel) {
+      this.remoteNameLabel.textContent = name || "Waiting...";
+    }
   }
 
   initializeWebSocket() {
@@ -41,9 +96,11 @@ class RandomVideoChat {
           this.clientId = data.id;
           break;
         case "partner-found":
+          this.updateRemoteName(data.partnerName);
           this.handlePartnerFound(data.initiator);
           break;
         case "partner-disconnected":
+          this.updateRemoteName(null);
           this.handlePartnerDisconnected();
           break;
         case "offer":
@@ -129,6 +186,7 @@ class RandomVideoChat {
   }
 
   async findNewPartner() {
+    this.updateRemoteName(null);
     this.updateStatus("connecting", "Looking for a partner...");
     this.waitingMessage.style.display = "flex";
     this.nextButton.disabled = true;
@@ -142,6 +200,7 @@ class RandomVideoChat {
       JSON.stringify({
         type: "waiting",
         from: this.clientId,
+        username: this.username,
       })
     );
     this.nextButton.disabled = false;
