@@ -98,8 +98,12 @@ class RandomVideoChat {
       ? "fas fa-microphone-slash"
       : "fas fa-microphone";
     this.muteButton.className = `${
-      this.isAudioMuted ? "bg-red-500" : "bg-navy-800"
-    } text-white p-4 rounded-full hover:opacity-90 transition-colors`;
+      this.isAudioMuted
+        ? "bg-red-100 text-red-600"
+        : "bg-blue-100 text-blue-600"
+    } p-4 rounded-full hover:${
+      this.isAudioMuted ? "bg-red-200" : "bg-blue-200"
+    } transition-all duration-200`;
   }
 
   toggleVideo() {
@@ -111,8 +115,10 @@ class RandomVideoChat {
     const icon = this.videoButton.querySelector("i");
     icon.className = this.isVideoOff ? "fas fa-video-slash" : "fas fa-video";
     this.videoButton.className = `${
-      this.isVideoOff ? "bg-red-500" : "bg-navy-800"
-    } text-white p-4 rounded-full hover:opacity-90 transition-colors`;
+      this.isVideoOff ? "bg-red-100 text-red-600" : "bg-blue-100 text-blue-600"
+    } p-4 rounded-full hover:${
+      this.isVideoOff ? "bg-red-200" : "bg-blue-200"
+    } transition-all duration-200`;
   }
 
   initializeEventListeners() {
