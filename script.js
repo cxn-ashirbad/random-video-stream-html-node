@@ -1,5 +1,14 @@
+/**
+ * Class representing a random video chat application
+ * Handles WebRTC peer connections, media streams, and WebSocket signaling
+ */
 class RandomVideoChat {
+  /**
+   * Initialize the video chat application
+   * Sets up streams, connections, and DOM elements
+   */
   constructor() {
+    // Media and connection properties
     this.localStream = null;
     this.remoteStream = null;
     this.peerConnection = null;
@@ -10,7 +19,7 @@ class RandomVideoChat {
     this.username = this.generateRandomName();
     this.partnerName = null;
 
-    // DOM elements
+    // Get references to DOM elements
     this.localVideo = document.getElementById("localVideo");
     this.remoteVideo = document.getElementById("remoteVideo");
     this.localNameLabel = document.getElementById("localNameLabel");
@@ -23,11 +32,16 @@ class RandomVideoChat {
     this.statusText = document.getElementById("statusText");
     this.waitingMessage = document.getElementById("waitingMessage");
 
+    // Set up event handlers and initialize connections
     this.initializeEventListeners();
     this.initializeWebSocket();
     this.updateLocalName();
   }
 
+  /**
+   * Generate a random username from adjective + animal combinations
+   * @returns {string} Random username like "HappyPanda"
+   */
   generateRandomName() {
     const adjectives = [
       "Happy",
@@ -65,12 +79,19 @@ class RandomVideoChat {
     return `${randomAdjective}${randomAnimal}`;
   }
 
+  /**
+   * Update the local user's displayed name
+   */
   updateLocalName() {
     if (this.localNameLabel) {
       this.localNameLabel.textContent = this.username;
     }
   }
 
+  /**
+   * Update the remote user's displayed name
+   * @param {string} name - Remote user's name
+   */
   updateRemoteName(name) {
     this.partnerName = name;
     if (this.remoteNameLabel) {
@@ -78,10 +99,12 @@ class RandomVideoChat {
     }
   }
 
+  /**
+   * Initialize WebSocket connection for signaling
+   * Handles various message types from the server
+   */
   initializeWebSocket() {
     this.ws = new WebSocket("ws://localhost:8080");
-
-    // Store the client ID when received from server
     this.clientId = null;
 
     this.ws.onopen = () => {
@@ -116,6 +139,9 @@ class RandomVideoChat {
     };
   }
 
+  /**
+   * Initialize local media stream and update UI
+   */
   async initialize() {
     try {
       this.localStream = await navigator.mediaDevices.getUserMedia({
@@ -131,6 +157,11 @@ class RandomVideoChat {
     }
   }
 
+  /**
+   * Update the connection status indicator
+   * @param {string} state - Current connection state
+   * @param {string} message - Status message to display
+   */
   updateStatus(state, message) {
     this.statusText.textContent = message;
     const colors = {
@@ -144,6 +175,9 @@ class RandomVideoChat {
     this.statusDot.className = `w-2 h-2 rounded-full ${colors[state]}`;
   }
 
+  /**
+   * Toggle local audio mute state
+   */
   toggleAudio() {
     this.isAudioMuted = !this.isAudioMuted;
     this.localStream.getAudioTracks().forEach((track) => {
@@ -163,6 +197,9 @@ class RandomVideoChat {
     } transition-all duration-200`;
   }
 
+  /**
+   * Toggle local video on/off state
+   */
   toggleVideo() {
     this.isVideoOff = !this.isVideoOff;
     this.localStream.getVideoTracks().forEach((track) => {
@@ -178,6 +215,9 @@ class RandomVideoChat {
     } transition-all duration-200`;
   }
 
+  /**
+   * Set up event listeners for UI controls
+   */
   initializeEventListeners() {
     this.nextButton.addEventListener("click", () => this.findNewPartner());
     this.muteButton.addEventListener("click", () => this.toggleAudio());
@@ -185,6 +225,9 @@ class RandomVideoChat {
     this.endCallButton.addEventListener("click", () => this.endCall());
   }
 
+  /**
+   * Start searching for a new chat partner
+   */
   async findNewPartner() {
     this.updateRemoteName(null);
     this.updateStatus("connecting", "Looking for a partner...");
@@ -206,6 +249,9 @@ class RandomVideoChat {
     this.nextButton.disabled = false;
   }
 
+  /**
+   * Create and configure new WebRTC peer connection
+   */
   async createPeerConnection() {
     const configuration = {
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -214,6 +260,7 @@ class RandomVideoChat {
     this.peerConnection = new RTCPeerConnection(configuration);
     this.iceCandidatesQueue = [];
 
+    // Handle connection state changes
     this.peerConnection.onconnectionstatechange = () => {
       console.log("Connection state:", this.peerConnection.connectionState);
       switch (this.peerConnection.connectionState) {
@@ -234,6 +281,7 @@ class RandomVideoChat {
       );
     };
 
+    // Handle ICE candidates
     this.peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
         this.ws.send(
@@ -246,16 +294,22 @@ class RandomVideoChat {
       }
     };
 
+    // Handle incoming media streams
     this.peerConnection.ontrack = (event) => {
       this.remoteVideo.srcObject = event.streams[0];
       this.waitingMessage.style.display = "none";
     };
 
+    // Add local media tracks to connection
     this.localStream.getTracks().forEach((track) => {
       this.peerConnection.addTrack(track, this.localStream);
     });
   }
 
+  /**
+   * Handle when a chat partner is found
+   * @param {boolean} initiator - Whether this client should initiate the connection
+   */
   async handlePartnerFound(initiator) {
     await this.createPeerConnection();
 
@@ -275,6 +329,10 @@ class RandomVideoChat {
     this.updateStatus("connected", "Connected with a stranger");
   }
 
+  /**
+   * Handle incoming WebRTC offer
+   * @param {RTCSessionDescriptionInit} offer - The received offer
+   */
   async handleOffer(offer) {
     await this.peerConnection.setRemoteDescription(
       new RTCSessionDescription(offer)
@@ -296,6 +354,10 @@ class RandomVideoChat {
     );
   }
 
+  /**
+   * Handle incoming WebRTC answer
+   * @param {RTCSessionDescriptionInit} answer - The received answer
+   */
   async handleAnswer(answer) {
     await this.peerConnection.setRemoteDescription(
       new RTCSessionDescription(answer)
@@ -306,6 +368,10 @@ class RandomVideoChat {
     }
   }
 
+  /**
+   * Handle incoming ICE candidate
+   * @param {RTCIceCandidateInit} candidate - The received ICE candidate
+   */
   async handleIceCandidate(candidate) {
     if (this.peerConnection) {
       if (this.peerConnection.remoteDescription) {
@@ -318,6 +384,9 @@ class RandomVideoChat {
     }
   }
 
+  /**
+   * Handle when chat partner disconnects
+   */
   handlePartnerDisconnected() {
     if (this.peerConnection) {
       this.peerConnection.close();
@@ -328,6 +397,9 @@ class RandomVideoChat {
     this.updateStatus("ready", "Partner disconnected");
   }
 
+  /**
+   * End current chat session
+   */
   endCall() {
     this.ws.send(JSON.stringify({ type: "disconnect" }));
     if (this.peerConnection) {
@@ -340,7 +412,7 @@ class RandomVideoChat {
   }
 }
 
-// Initialize when the page loads
+// Initialize chat when page loads
 window.addEventListener("DOMContentLoaded", () => {
   const chat = new RandomVideoChat();
   chat.initialize();
