@@ -1,6 +1,7 @@
 // Import WebSocket library and create server on port 8080
 const WebSocket = require("ws");
 const wss = new WebSocket.Server({ port: 8080 });
+console.log("WebSocket server started on port 8080");
 
 // Track users waiting for partners and active connections between users
 const waitingUsers = new Set();
@@ -11,6 +12,7 @@ wss.on("connection", (ws) => {
   // Generate random ID and initialize username for new connection
   ws.id = Math.random().toString(36).substr(2, 9);
   ws.username = null;
+  console.log(`New client connected with ID: ${ws.id}`);
 
   // Send client their assigned ID
   ws.send(
@@ -23,10 +25,12 @@ wss.on("connection", (ws) => {
   // Handle incoming messages
   ws.on("message", (message) => {
     const data = JSON.parse(message);
+    console.log(`Received message of type: ${data.type} from client: ${ws.id}`);
 
     // Store username if provided
     if (data.username) {
       ws.username = data.username;
+      console.log(`Username set for client ${ws.id}: ${data.username}`);
     }
 
     // Route message to appropriate handler based on type
@@ -47,6 +51,7 @@ wss.on("connection", (ws) => {
 
   // Clean up when client disconnects
   ws.on("close", () => {
+    console.log(`Client disconnected: ${ws.id}`);
     handleDisconnect(ws);
   });
 });
@@ -59,11 +64,16 @@ wss.on("connection", (ws) => {
  * - If no partner available, adds user to waiting pool
  */
 function handleWaitingUser(ws) {
+  console.log(`Finding partner for client: ${ws.id}`);
+
   // Disconnect from current partner if any
   if (connections.has(ws.id)) {
     const partnerId = connections.get(ws.id);
     connections.delete(partnerId);
     connections.delete(ws.id);
+    console.log(
+      `Disconnected existing partnership between ${ws.id} and ${partnerId}`
+    );
 
     const partner = [...wss.clients].find((client) => client.id === partnerId);
     if (partner) {
@@ -85,6 +95,7 @@ function handleWaitingUser(ws) {
       // Create bidirectional connection mapping
       connections.set(ws.id, partner.id);
       connections.set(partner.id, ws.id);
+      console.log(`Established connection between ${ws.id} and ${partner.id}`);
 
       // Notify both users of successful match
       ws.send(
@@ -105,6 +116,9 @@ function handleWaitingUser(ws) {
   } else {
     // No partner available - add to waiting pool
     waitingUsers.add(ws.id);
+    console.log(
+      `Added ${ws.id} to waiting pool. Total waiting: ${waitingUsers.size}`
+    );
   }
 }
 
@@ -115,11 +129,13 @@ function handleWaitingUser(ws) {
  */
 function handleDisconnect(ws) {
   waitingUsers.delete(ws.id);
+  console.log(`Removed ${ws.id} from waiting pool`);
 
   if (connections.has(ws.id)) {
     const partnerId = connections.get(ws.id);
     connections.delete(partnerId);
     connections.delete(ws.id);
+    console.log(`Cleaned up connection between ${ws.id} and ${partnerId}`);
 
     const partner = [...wss.clients].find((client) => client.id === partnerId);
     if (partner) {
@@ -135,6 +151,7 @@ function handleDisconnect(ws) {
  */
 function forwardMessage(data) {
   if (!data.from) {
+    console.warn("Received message without sender ID");
     return;
   }
   const partner = [...wss.clients].find(
@@ -143,5 +160,10 @@ function forwardMessage(data) {
   if (partner) {
     data.from = data.from;
     partner.send(JSON.stringify(data));
+    console.log(
+      `Forwarded ${data.type} message from ${data.from} to ${partner.id}`
+    );
+  } else {
+    console.warn(`Could not find partner for client ${data.from}`);
   }
 }
