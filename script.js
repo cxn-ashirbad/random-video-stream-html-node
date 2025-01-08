@@ -104,7 +104,11 @@ class RandomVideoChat {
    * Handles various message types from the server
    */
   initializeWebSocket() {
-    this.ws = new WebSocket("ws://localhost:8080");
+    this.ws = new WebSocket(
+      true
+        ? "wss://random-video-stream-html-node-production.up.railway.app"
+        : "ws://localhost:8080"
+    );
     this.clientId = null;
 
     this.ws.onopen = () => {
